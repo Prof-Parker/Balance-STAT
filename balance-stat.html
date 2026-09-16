@@ -1,0 +1,1628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Balance, STAT!</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;0,700;1,500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0f2436;
+    --ink-soft:#375065;
+    --paper:#f2f7f5;
+    --paper-raised:#ffffff;
+    --line:#d7e2df;
+    --accent:#0e7c86;
+    --accent-strong:#095a62;
+    --accent-tint:#e2f2f1;
+    --amber:#c97a2e;
+    --amber-tint:#faecd8;
+    --danger:#b3402b;
+    --danger-tint:#fbe7e2;
+    --success:#2f8f5b;
+    --success-tint:#e3f4ea;
+    --mono-tint:#eef1ee;
+    --shadow: 0 1px 2px rgba(15,36,54,.06), 0 8px 24px -12px rgba(15,36,54,.18);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ink:#e8f1ee;
+      --ink-soft:#a9c0ba;
+      --paper:#0b1720;
+      --paper-raised:#132430;
+      --line:#233c46;
+      --accent:#3fd0c2;
+      --accent-strong:#7fe3d7;
+      --accent-tint:#12333130;
+      --amber:#f0a854;
+      --amber-tint:#3a2c1740;
+      --danger:#ff8b74;
+      --danger-tint:#3a1a1540;
+      --success:#7cd9a4;
+      --success-tint:#123a2840;
+      --mono-tint:#0f2027;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 28px -14px rgba(0,0,0,.6);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#e8f1ee;
+    --ink-soft:#a9c0ba;
+    --paper:#0b1720;
+    --paper-raised:#132430;
+    --line:#233c46;
+    --accent:#3fd0c2;
+    --accent-strong:#7fe3d7;
+    --accent-tint:#12333130;
+    --amber:#f0a854;
+    --amber-tint:#3a2c1740;
+    --danger:#ff8b74;
+    --danger-tint:#3a1a1540;
+    --success:#7cd9a4;
+    --success-tint:#123a2840;
+    --mono-tint:#0f2027;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 28px -14px rgba(0,0,0,.6);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    line-height:1.5;
+  }
+  h1,h2,h3,.display{
+    font-family:"Lora", Georgia, "Times New Roman", serif;
+    text-wrap:balance;
+    margin:0;
+    color:var(--ink);
+  }
+  .mono, .tabular, .lab-value, .timer, .score-num{
+    font-family:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+    font-variant-numeric:tabular-nums;
+  }
+  a{color:var(--accent-strong);}
+  button{font-family:inherit;}
+  ::selection{background:var(--accent-tint);}
+
+  #app{
+    max-width:960px;
+    margin:0 auto;
+    padding:20px 20px 56px;
+    min-height:100vh;
+  }
+
+  /* ---------- Monitor bar ---------- */
+  .monitor{
+    position:sticky; top:0; z-index:20;
+    display:flex; align-items:center; gap:14px;
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:10px 16px;
+    margin-bottom:20px;
+    box-shadow:var(--shadow);
+    flex-wrap:wrap;
+  }
+  .monitor .brand{
+    font-family:"Lora",serif; font-weight:700; font-size:1.02rem;
+    display:flex; align-items:center; gap:8px;
+    color:var(--accent-strong);
+    white-space:nowrap;
+  }
+  .pulse-dot{
+    width:9px;height:9px;border-radius:50%;
+    background:var(--accent);
+    box-shadow:0 0 0 0 var(--accent);
+    animation:pulse 1.8s infinite;
+    flex:none;
+  }
+  @media (prefers-reduced-motion: reduce){ .pulse-dot{animation:none;} }
+  @keyframes pulse{
+    0%{box-shadow:0 0 0 0 rgba(14,124,134,.5);}
+    70%{box-shadow:0 0 0 8px rgba(14,124,134,0);}
+    100%{box-shadow:0 0 0 0 rgba(14,124,134,0);}
+  }
+  .monitor .sep{width:1px;align-self:stretch;background:var(--line);}
+  .monitor .field{display:flex;flex-direction:column;gap:1px;min-width:0;}
+  .monitor .field .k{font-size:.66rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);}
+  .monitor .field .v{font-size:.92rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .monitor .grow{flex:1;min-width:8px;}
+  .refbtn{
+    border:1px solid var(--accent);
+    background:var(--accent-tint);
+    color:var(--accent-strong);
+    border-radius:999px;
+    padding:7px 14px;
+    font-size:.82rem;
+    font-weight:600;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .refbtn:hover{filter:brightness(1.05);}
+  .refbtn:focus-visible, button:focus-visible, input:focus-visible, .choice:focus-visible, .chip:focus-visible{
+    outline:2px solid var(--accent-strong); outline-offset:2px;
+  }
+
+  .progress-track{
+    height:6px;border-radius:999px;background:var(--line);
+    overflow:hidden;margin-bottom:22px;
+  }
+  .progress-fill{
+    height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-strong));
+    border-radius:999px;transition:width .4s ease;
+  }
+
+  /* ---------- Cards / generic ---------- */
+  .card{
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:26px 28px;
+    box-shadow:var(--shadow);
+  }
+  .stack{display:flex;flex-direction:column;gap:16px;}
+  .eyebrow{
+    font-size:.72rem; letter-spacing:.09em; text-transform:uppercase;
+    color:var(--accent-strong); font-weight:600;
+  }
+  .lede{color:var(--ink-soft); max-width:64ch;}
+  .btn{
+    border:none; border-radius:10px; cursor:pointer;
+    padding:13px 22px; font-size:.98rem; font-weight:600;
+    background:var(--accent); color:#fff;
+    box-shadow:0 4px 14px -6px rgba(14,124,134,.55);
+  }
+  .btn:hover{background:var(--accent-strong);}
+  .btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none;}
+  .btn.ghost{
+    background:transparent;color:var(--accent-strong);
+    border:1px solid var(--accent);box-shadow:none;
+  }
+  .btn.ghost:hover{background:var(--accent-tint);}
+  .btn-row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;}
+
+  input[type=text]{
+    font:inherit;
+    padding:12px 14px;
+    border-radius:10px;
+    border:1px solid var(--line);
+    background:var(--paper);
+    color:var(--ink);
+    width:100%;
+    max-width:360px;
+  }
+  label.field-label{font-size:.82rem;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:6px;}
+
+  /* ---------- Title screen ---------- */
+  .hero{
+    display:flex; flex-direction:column; gap:6px; margin-bottom:22px;
+  }
+  .hero h1{font-size:clamp(2rem,5vw,2.7rem); letter-spacing:-.01em;}
+  .hero .tag{color:var(--ink-soft); font-size:1.02rem;}
+  .lo-grid{
+    display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr));
+    gap:10px; margin-top:6px;
+  }
+  .lo-item{
+    display:flex; gap:10px; align-items:flex-start;
+    background:var(--paper); border:1px solid var(--line);
+    border-radius:10px; padding:10px 12px; font-size:.86rem;
+  }
+  .lo-item .n{
+    flex:none; width:20px;height:20px;border-radius:50%;
+    background:var(--accent-tint); color:var(--accent-strong);
+    display:flex;align-items:center;justify-content:center;
+    font-size:.68rem;font-weight:700;
+  }
+
+  /* ---------- Round header ---------- */
+  .round-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:4px;}
+  .round-title{font-size:1.5rem;}
+  .round-kicker{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+  .pill{
+    font-size:.7rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+    padding:4px 10px;border-radius:999px;background:var(--accent-tint);color:var(--accent-strong);
+  }
+  .pill.amber{background:var(--amber-tint);color:var(--amber);}
+
+  /* ---------- Case narrative ---------- */
+  .chart-note{
+    background:var(--mono-tint);
+    border:1px solid var(--line);
+    border-left:4px solid var(--accent);
+    border-radius:10px;
+    padding:16px 18px;
+    font-size:.94rem;
+  }
+  .chart-note h3{font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:8px;}
+  .vitals-row{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 4px;}
+  .vital{
+    background:var(--paper-raised);border:1px solid var(--line);border-radius:8px;
+    padding:8px 12px;text-align:center;min-width:84px;
+  }
+  .vital .lab{font-size:.62rem;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft);}
+  .vital .num{font-size:1.05rem;font-weight:600;}
+  .vital.flag .num{color:var(--danger);}
+
+  /* ---------- Matching (Round 1) ---------- */
+  .match-wrap{display:grid;grid-template-columns:1fr 1fr;gap:22px;}
+  @media (max-width:640px){.match-wrap{grid-template-columns:1fr;}}
+  .chip-col{display:flex;flex-direction:column;gap:10px;}
+
+  /* ---------- Drag-and-drop pool + drop targets (Round 1 & shared) ---------- */
+  .pool-tray{display:flex;flex-wrap:wrap;gap:8px;}
+  .pool-chip{
+    border:1px solid var(--line);background:var(--paper-raised);color:var(--ink);
+    border-radius:8px;padding:10px 14px;font-size:.86rem;cursor:grab;
+    max-width:100%;
+  }
+  .pool-chip:hover{border-color:var(--accent);}
+  .pool-chip.selected{border-color:var(--accent-strong);border-width:2px;background:var(--accent-tint);}
+  .pool-chip.dragging{opacity:.4;}
+  .term-rows{display:flex;flex-direction:column;gap:10px;}
+  .term-row{display:flex;gap:12px;align-items:stretch;}
+  @media (max-width:640px){.term-row{flex-direction:column;gap:6px;}}
+  .term-label{
+    flex:0 0 240px;display:flex;align-items:center;
+    font-size:.88rem;font-weight:600;padding:0 2px;
+  }
+  @media (max-width:640px){.term-label{flex:none;}}
+  .dropzone{
+    flex:1;min-height:60px;border-radius:10px;
+    border:1.5px dashed var(--line);background:var(--paper);
+    display:flex;align-items:stretch;
+    transition:border-color .12s ease, background .12s ease;
+  }
+  .dropzone.dragover{border-color:var(--accent);background:var(--accent-tint);}
+  .dropzone.filled{border-style:solid;border-color:transparent;background:transparent;}
+  .dropzone .placeholder{
+    color:var(--ink-soft);font-size:.82rem;display:flex;align-items:center;padding:0 12px;
+  }
+  .slot-chip{
+    width:100%;min-height:60px;cursor:grab;
+    display:flex;align-items:center;justify-content:space-between;gap:8px;
+    border:1.5px solid var(--line);background:var(--paper-raised);color:var(--ink);
+    border-radius:10px;padding:10px 14px;font-size:.86rem;
+  }
+  .slot-chip.selected{border-color:var(--accent-strong);border-width:2px;background:var(--accent-tint);}
+  .slot-chip.dragging{opacity:.4;}
+  .slot-chip.correct{border-color:var(--success);background:var(--success-tint);cursor:default;}
+  .slot-chip.incorrect{border-color:var(--danger);background:var(--danger-tint);cursor:default;}
+  .slot-chip .remove{border:none;background:none;color:var(--ink-soft);cursor:pointer;font-size:.85rem;flex:none;padding:2px 4px;}
+  .slot-chip .remove:hover{color:var(--danger);}
+  .chip{
+    text-align:left;
+    display:flex;
+    align-items:center;
+    min-height:66px;
+    border:1px solid var(--line);
+    background:var(--paper);
+    border-radius:10px;
+    padding:12px 14px;
+    font-size:.9rem;
+    cursor:pointer;
+    transition:transform .12s ease, border-color .12s ease, background .12s ease;
+    color:var(--ink);
+  }
+  .chip:hover:not(:disabled){border-color:var(--accent);}
+  .chip.selected{border-color:var(--accent-strong);background:var(--accent-tint);}
+  .chip.matched{
+    border-color:var(--success);background:var(--success-tint);color:var(--ink);
+    cursor:default;opacity:.9;
+  }
+  .chip.matched::after{content:" ✓";color:var(--success);font-weight:700;margin-left:auto;padding-left:8px;}
+  .chip.mismatched{
+    border-color:var(--danger);background:var(--danger-tint);color:var(--ink);
+    cursor:default;opacity:.9;
+  }
+  .chip.mismatched::after{content:" ✗";color:var(--danger);font-weight:700;margin-left:auto;padding-left:8px;}
+  .chip.wrong{animation:shake .3s ease;border-color:var(--danger);background:var(--danger-tint);}
+  .chip.dragover{border-color:var(--accent);background:var(--accent-tint);}
+  .chip.dragging{opacity:.4;}
+  .chip[draggable="true"]{cursor:grab;}
+  @keyframes shake{
+    0%,100%{transform:translateX(0);}
+    25%{transform:translateX(-4px);}
+    75%{transform:translateX(4px);}
+  }
+  .answer-key{display:flex;flex-direction:column;gap:8px;}
+  .ak-row{
+    display:flex;gap:10px;align-items:flex-start;padding:10px 12px;
+    border:1px solid var(--line);border-radius:10px;background:var(--paper);font-size:.86rem;
+  }
+  .ak-row.ok{border-color:var(--success);background:var(--success-tint);}
+  .ak-row.miss{border-color:var(--danger);background:var(--danger-tint);}
+  .ak-row .mark{flex:none;font-weight:700;}
+  .ak-row.ok .mark{color:var(--success);}
+  .ak-row.miss .mark{color:var(--danger);}
+  .ak-row .ak-body strong{display:block;margin-bottom:2px;}
+  .ak-row .ak-your{color:var(--ink-soft);font-size:.82rem;margin-top:4px;}
+
+  /* ---------- Choices / MCQ ---------- */
+  .choice-list{display:flex;flex-direction:column;gap:10px;}
+  .choice{
+    display:flex;gap:10px;align-items:flex-start;text-align:left;
+    border:1px solid var(--line);background:var(--paper);border-radius:10px;
+    padding:12px 14px;cursor:pointer;font-size:.92rem;color:var(--ink);
+  }
+  .choice input{margin-top:3px;flex:none;}
+  .choice:hover{border-color:var(--accent);}
+  .choice.correct{border-color:var(--success);background:var(--success-tint);}
+  .choice.incorrect{border-color:var(--danger);background:var(--danger-tint);}
+  .choice.locked{cursor:default;}
+  .choice.picked{border-color:var(--accent-strong);}
+
+  .feedback{
+    border-radius:10px;padding:14px 16px;font-size:.9rem;margin-top:4px;
+    border:1px solid var(--line);
+  }
+  .feedback.good{background:var(--success-tint);border-color:var(--success);}
+  .feedback.bad{background:var(--danger-tint);border-color:var(--danger);}
+  .feedback strong{display:block;margin-bottom:4px;font-family:"Lora",serif;font-size:.98rem;}
+
+  /* ---------- Lab table ---------- */
+  .tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;}
+  table.labs{border-collapse:collapse;width:100%;font-size:.84rem;min-width:520px;}
+  table.labs th,table.labs td{padding:8px 12px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap;}
+  table.labs th:first-child,table.labs td:first-child{text-align:left;}
+  table.labs thead th{background:var(--mono-tint);font-weight:600;font-size:.72rem;letter-spacing:.03em;text-transform:uppercase;color:var(--ink-soft);}
+  table.labs td{font-family:"IBM Plex Mono",monospace;}
+  table.labs td:first-child{font-family:"IBM Plex Sans",sans-serif;}
+  table.labs td.flag{color:var(--danger);font-weight:600;}
+
+  /* ---------- Sorting bins (Round 4) ---------- */
+  .bin-board{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:16px;}
+  @media (max-width:720px){.bin-board{grid-template-columns:1fr;}}
+  .bin{
+    border:1.5px dashed var(--line);border-radius:12px;padding:12px;min-height:120px;
+    background:var(--paper);transition:border-color .12s ease, background .12s ease;
+  }
+  .bin.dragover{border-color:var(--accent);background:var(--accent-tint);}
+  .bin h4{font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);margin:0 0 8px;}
+  .bin .items{display:flex;flex-direction:column;gap:6px;}
+  .fluid-tray{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
+  .fluid-chip{
+    border:1.5px solid var(--line);background:var(--paper-raised);
+    border-radius:8px;padding:8px 12px;font-size:.86rem;cursor:grab;
+    display:flex;align-items:center;gap:6px;
+    color:var(--ink);
+  }
+  .fluid-chip .drop{width:8px;height:8px;border-radius:50%;background:var(--accent);flex:none;}
+  .fluid-chip:hover{border-color:var(--accent);}
+  .fluid-chip.selected{border-color:var(--accent-strong);border-width:2px;background:var(--accent-tint);}
+  .fluid-chip.dragging{opacity:.4;}
+  .fluid-chip.placed{display:none;}
+  .bin-item{
+    background:var(--paper-raised);border:1.5px solid var(--line);border-radius:8px;
+    padding:6px 10px;font-size:.84rem;display:flex;justify-content:space-between;gap:8px;align-items:center;
+    cursor:grab;
+  }
+  .bin-item.dragging{opacity:.4;}
+  .bin-item.correct{border-color:var(--success);background:var(--success-tint);cursor:default;}
+  .bin-item.incorrect{border-color:var(--danger);background:var(--danger-tint);cursor:default;}
+  .bin-item button{
+    border:none;background:none;color:var(--ink-soft);cursor:pointer;font-size:.75rem;
+  }
+
+  /* ---------- Speed round (Round 5) ---------- */
+  .speed-bar{
+    display:flex;align-items:center;gap:12px;background:var(--amber-tint);
+    border:1px solid var(--amber);border-radius:10px;padding:10px 14px;margin-bottom:14px;
+  }
+  .speed-bar .timer{font-size:1.3rem;font-weight:700;color:var(--amber);}
+  .lyte-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  @media (max-width:640px){.lyte-grid{grid-template-columns:1fr;}}
+
+  /* ---------- Score / report ---------- */
+  .score-banner{
+    display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;
+    background:linear-gradient(135deg,var(--accent-tint),var(--paper-raised));
+    border:1px solid var(--line);border-radius:14px;padding:20px 24px;
+  }
+  .score-num{font-size:2.4rem;font-weight:700;color:var(--accent-strong);}
+  .rank-badge{
+    font-family:"Lora",serif;font-weight:700;font-size:1.1rem;color:var(--ink);
+    background:var(--paper-raised);border:1px solid var(--line);border-radius:999px;
+    padding:8px 18px;
+  }
+  .breakdown{display:flex;flex-direction:column;gap:8px;}
+  .brow{display:flex;justify-content:space-between;gap:12px;font-size:.88rem;padding:8px 0;border-bottom:1px dashed var(--line);}
+  .brow .bar-track{flex:1;height:8px;background:var(--line);border-radius:999px;overflow:hidden;margin:0 12px;}
+  .brow .bar-fill{height:100%;background:var(--accent);}
+
+  .epilogue{
+    background:var(--mono-tint);border:1px solid var(--line);border-radius:12px;
+    padding:18px 20px;font-size:.92rem;
+  }
+  .epilogue h3{font-family:"Lora",serif;font-size:1.05rem;margin-bottom:8px;}
+
+  .cross-tbl{width:100%;border-collapse:collapse;font-size:.84rem;}
+  .cross-tbl th,.cross-tbl td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);}
+  .cross-tbl th{color:var(--ink-soft);font-size:.7rem;letter-spacing:.05em;text-transform:uppercase;}
+
+  .discuss-list{display:flex;flex-direction:column;gap:10px;padding:0;margin:0;list-style:none;counter-reset:d;}
+  .discuss-list li{
+    counter-increment:d;position:relative;padding-left:34px;font-size:.92rem;
+  }
+  .discuss-list li::before{
+    content:counter(d);position:absolute;left:0;top:0;
+    width:22px;height:22px;border-radius:50%;background:var(--accent-tint);color:var(--accent-strong);
+    font-size:.72rem;font-weight:700;display:flex;align-items:center;justify-content:center;
+  }
+
+  /* ---------- Reference overlay ---------- */
+  .overlay{
+    position:fixed;inset:0;background:rgba(10,20,26,.55);
+    display:flex;align-items:flex-start;justify-content:center;
+    padding:5vh 16px;z-index:50;overflow-y:auto;
+  }
+  .overlay[hidden]{display:none;}
+  .ref-card{
+    background:var(--paper-raised);border:1px solid var(--line);border-radius:16px;
+    max-width:640px;width:100%;padding:24px 26px;box-shadow:var(--shadow);
+  }
+  .ref-card h2{font-size:1.2rem;margin-bottom:4px;}
+  .ref-section{margin-top:16px;}
+  .ref-section h4{font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;color:var(--accent-strong);margin-bottom:8px;}
+  .ref-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.84rem;}
+  @media (max-width:520px){.ref-grid{grid-template-columns:1fr;}}
+  .ref-row{display:flex;justify-content:space-between;gap:10px;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:7px 10px;}
+  .close-x{
+    float:right;border:none;background:var(--paper);border:1px solid var(--line);
+    border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:1rem;color:var(--ink-soft);
+  }
+
+  .footer-note{
+    text-align:center;color:var(--ink-soft);font-size:.78rem;margin-top:34px;
+  }
+  [hidden]{display:none!important;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<div class="overlay" id="refOverlay" hidden>
+  <div class="ref-card">
+    <button class="close-x" id="refClose" aria-label="Close reference card">✕</button>
+    <h2>Quick Reference</h2>
+    <p class="lede" style="font-size:.86rem;">Not scored &mdash; use it any time you need a reminder.</p>
+
+    <div class="ref-section">
+      <h4>Body fluid compartments (≈ % of body weight)</h4>
+      <div class="ref-grid">
+        <div class="ref-row"><span>Total body water</span><strong>~60%</strong></div>
+        <div class="ref-row"><span>Intracellular (ICF)</span><strong>~40%</strong></div>
+        <div class="ref-row"><span>Extracellular &ndash; interstitial</span><strong>~15%</strong></div>
+        <div class="ref-row"><span>Extracellular &ndash; intravascular</span><strong>~5%</strong></div>
+      </div>
+    </div>
+
+    <div class="ref-section">
+      <h4>IV fluid tonicity</h4>
+      <div class="ref-grid">
+        <div class="ref-row"><span>Isotonic</span><strong>0.9% NS &middot; LR &middot; D5W*</strong></div>
+        <div class="ref-row"><span>Hypotonic</span><strong>0.45% NS</strong></div>
+        <div class="ref-row"><span>Hypertonic</span><strong>3% NS &middot; D5&frac12;NS &middot; D5NS</strong></div>
+      </div>
+      <p class="lede" style="font-size:.76rem;margin-top:6px;">*D5W is isotonic in the bag, but once dextrose is metabolized it delivers free water and acts like a hypotonic solution in the body.</p>
+    </div>
+
+    <div class="ref-section">
+      <h4>Normal adult lab values</h4>
+      <div class="ref-grid">
+        <div class="ref-row"><span>Sodium</span><strong>136&ndash;145 mEq/L</strong></div>
+        <div class="ref-row"><span>Potassium</span><strong>3.5&ndash;5.1 mEq/L</strong></div>
+        <div class="ref-row"><span>Calcium</span><strong>8.7&ndash;10.5 mg/dL</strong></div>
+        <div class="ref-row"><span>Magnesium</span><strong>1.6&ndash;2.3 mg/dL</strong></div>
+        <div class="ref-row"><span>Phosphate</span><strong>2.5&ndash;4.5 mg/dL</strong></div>
+        <div class="ref-row"><span>BUN</span><strong>8&ndash;26 mg/dL</strong></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/canvas-confetti/1.9.3/confetti.browser.min.js"></script>
+<script>
+(function(){
+"use strict";
+
+/* =====================================================================
+   BALANCE, STAT! — a fluids & electrolytes case game
+   Built around: Kamatam et al., "Extreme Hypernatremia due to
+   Dehydration," J Med Cases 2023;14(7):232-236.
+===================================================================== */
+
+/* ---------------------- Content data ---------------------- */
+
+const LOS = [
+  "Body fluid compartments",
+  "Regulation of fluid & electrolyte movement",
+  "ECF volume imbalances: deficit & excess",
+  "Common fluid imbalances",
+  "Common IV fluid solutions",
+  "Electrolyte imbalances (Na, K, Mg, Ca, Phos)"
+];
+
+const R1_PAIRS = [
+  { term:"Intracellular Fluid (ICF)", def:"Fluid inside cells — about two-thirds of total body water" },
+  { term:"Interstitial Fluid", def:"Fluid between cells and outside vessels — cushions and bathes tissue" },
+  { term:"Intravascular Fluid (Plasma)", def:"Fluid inside blood vessels — carries cells and proteins through circulation" },
+  { term:"Osmosis", def:"Water moves across a membrane toward the side with more solute" },
+  { term:"Active Transport", def:"A pump (e.g., Na⁺/K⁺-ATPase) moves particles against their gradient using ATP" },
+  { term:"Oncotic Pressure", def:"Pulling force from plasma proteins (albumin) that holds water inside vessels" },
+  { term:"ADH (Antidiuretic Hormone)", def:"Released when the blood is too concentrated — tells the kidneys to reabsorb water" },
+  { term:"Aldosterone (RAAS)", def:"Released when blood volume/pressure drops — tells the kidneys to reabsorb sodium (water follows)" }
+];
+
+const CASE_INTRO = {
+  history:[
+    "70-year-old male, nursing home resident, brought in by ambulance for altered mental status.",
+    "PMH: Parkinson's dementia, deep vein thrombosis on chronic anticoagulation, right ventriculoperitoneal (VP) shunt for hydrocephalus.",
+    "Baseline: bedbound / wheelchair-dependent, but previously alert, oriented, and conversant.",
+    "One week prior: completed a course of azithromycin for a cough."
+  ],
+  vitals:[
+    {lab:"Temp", num:"36.4°C", flag:false},
+    {lab:"HR", num:"101", flag:true},
+    {lab:"BP", num:"78/51", flag:true},
+    {lab:"RR", num:"15", flag:false},
+    {lab:"SpO₂", num:"97% RA", flag:false}
+  ],
+  exam:"Cachectic, scaphoid abdomen, mottled lower extremities, coarse crackles bilaterally."
+};
+
+const NEURO_EXAM = "No eye opening to painful stimuli. No vocal response. No motor response. He was intubated for airway protection.";
+
+const R2_Q1 = {
+  prompt:"Which extracellular fluid volume imbalance best fits this presentation?",
+  options:[
+    {text:"Fluid volume deficit", correct:true},
+    {text:"Fluid volume excess", correct:false},
+    {text:"Normal fluid balance", correct:false},
+    {text:"Cannot be determined from this information", correct:false}
+  ],
+  explain:"Reduced thirst response, dependence on staff for fluids, and a poor oral intake history all point to dehydration — a fluid volume deficit. Elderly, institutionalized patients are at especially high risk because thirst and renal concentrating ability both decline with age."
+};
+
+const R2_Q2 = {
+  prompt:"Select every finding below that supports fluid volume deficit in this patient.",
+  items:[
+    {text:"Tachycardia (HR 101)", correct:true, note:"The heart compensates for low circulating volume by beating faster."},
+    {text:"Hypotension (BP 78/51)", correct:true, note:"Reduced intravascular volume lowers blood pressure."},
+    {text:"Altered mental status / decreased LOC", correct:true, note:"Cerebral perfusion and cell hydration both suffer with severe volume and water loss."},
+    {text:"Elevated BUN and creatinine", correct:true, note:"Reduced renal perfusion from volume depletion raises BUN and creatinine (prerenal pattern)."},
+    {text:"Coarse bilateral crackles", correct:false, note:"Tempting — crackles usually signal fluid volume EXCESS. Here they most likely reflect aspiration/pneumonia, not overload: his BNP was normal (33 pg/mL) and chest imaging showed infiltrate vs. atelectasis, not pulmonary edema."},
+    {text:"Bounding, easily palpable pulse", correct:false, note:"A bounding pulse is a fluid volume EXCESS sign — this patient's exam doesn't show that."},
+    {text:"Jugular venous distention", correct:false, note:"JVD reflects volume overload, not deficit — not part of this presentation."}
+  ]
+};
+
+const R2_GCS_CALC = {
+  prompt:"Using the neuro exam above, calculate this patient's Glasgow Coma Scale (GCS) score.",
+  options:[
+    {text:"0 — no response in any category", correct:false},
+    {text:"3 — the lowest possible score on the scale", correct:true},
+    {text:"8 — the usual threshold for airway protection concerns", correct:false},
+    {text:"15 — fully alert and oriented", correct:false}
+  ],
+  explain:"Every GCS category has a floor of 1 point, even with zero response: Eye opening 1 (none) + Verbal 1 (none) + Motor 1 (none) = 3. A GCS can never score 0 — 3 is the lowest possible score and 15 is fully alert."
+};
+
+const R2_GCS_INTERPRET = {
+  prompt:"Based on your calculated GCS score which of the following apply? (Select all that apply)",
+  items:[
+    {text:"There is significant neurological injury occurring", correct:true, note:"A GCS of 3 is the lowest possible score and reflects profound impairment of consciousness."},
+    {text:"The patient requires immediate CPR", correct:false, note:"GCS measures level of consciousness, not cardiac or respiratory arrest — this patient still had a pulse and was breathing; he was intubated for airway protection, not resuscitated."},
+    {text:"The patient is unable to protect their airway", correct:true, note:"A GCS this low means the patient can't reliably guard against aspiration — exactly why he was intubated."},
+    {text:"Fluid or electrolyte imbalances are not contributing to the patient's neurologic status", correct:false, note:"The opposite is true here — extreme hypernatremia is a major, direct cause of his altered mental status."},
+    {text:"This level of consciousness is consistent with the patient's baseline dementia", correct:false, note:"He was previously alert, oriented, and conversant — this is an acute change from baseline, not his dementia, and acute changes always need a cause."}
+  ]
+};
+
+const LABS = {
+  columns:["On admission","24 h","48 h","72 h","96 h"],
+  rows:[
+    {label:"Sodium (mEq/L)", range:"136–145", values:["191","182","171","164","157"], flagIdx:[0,1,2,3,4]},
+    {label:"Potassium (mEq/L)", range:"3.5–5.1", values:["5.1","3.9","3.5","3.1","3.3"], flagIdx:[3,4]},
+    {label:"Chloride (mEq/L)", range:"98–107", values:["&gt;150","&gt;150","146","137","128"], flagIdx:[0,1,2,3,4]},
+    {label:"BUN (mg/dL)", range:"8–26", values:["119","31","31","44","27"], flagIdx:[0,1,2,3,4]},
+    {label:"Creatinine (mg/dL)", range:"0.7–1.3", values:["3.17","2.9","2.27","1.43","1.13"], flagIdx:[0,1,2,3]}
+  ]
+};
+
+const R3_QUESTIONS = [
+  {
+    prompt:"The admission sodium is 191 mEq/L. How is this classified?",
+    options:[
+      {text:"Mild hypernatremia (&gt;145 mEq/L)", correct:false},
+      {text:"Severe hypernatremia (&gt;160 mEq/L)", correct:false},
+      {text:"Extreme hypernatremia (&gt;190 mEq/L)", correct:true},
+      {text:"Within normal limits", correct:false}
+    ],
+    explain:"Hypernatremia starts above 145 mEq/L, is severe above 160 mEq/L, and is classified extreme above 190 mEq/L. A level of 191 mEq/L is at the very top of that scale and is exceptionally rare."
+  },
+  {
+    prompt:"Sodium dropped from 191 to 157 mEq/L over 96 hours — about 34 mEq/L total. Guidelines recommend correcting no faster than 0.5 mEq/L/hr (or 12 mEq/L/24 hr). Was this correction rate safe?",
+    options:[
+      {text:"Yes — roughly 0.35 mEq/L/hr, well inside the safe range", correct:true},
+      {text:"No — this is dangerously fast and risks cerebral edema", correct:false},
+      {text:"No — it should have been corrected within the first few hours", correct:false},
+      {text:"Not enough information to tell", correct:false}
+    ],
+    explain:"34 mEq/L over 96 hours averages about 0.35 mEq/L/hr (roughly 8–9 mEq/L per 24 hr) — a slow, guideline-concordant correction. Correcting hypernatremia too fast pulls water into swollen brain cells and can cause fatal cerebral edema, so slow and steady is the rule even when the starting number is extreme."
+  },
+  {
+    prompt:"Potassium trends 5.1 → 3.9 → 3.5 → 3.1 mEq/L over the first 72 hours. What's the priority nursing consideration?",
+    options:[
+      {text:"None — potassium isn't clinically relevant here", correct:false},
+      {text:"Monitor closely for hypokalemia and its cardiac effects as fluids correct", correct:true},
+      {text:"Give an emergency IV potassium bolus immediately", correct:false},
+      {text:"Hold all IV fluids until potassium stabilizes", correct:false}
+    ],
+    explain:"As fluid resuscitation dilutes the serum and renal excretion improves, potassium is drifting down toward hypokalemia. It needs frequent monitoring and, if ordered, slow IV replacement — potassium is never given as an IV push/bolus, which can cause fatal arrhythmias."
+  },
+  {
+    prompt:"BUN 119 mg/dL and creatinine 3.17 mg/dL on admission (a BUN:Cr ratio over 20:1) both trend back toward normal with fluid resuscitation. What does this pattern suggest?",
+    options:[
+      {text:"Chronic kidney disease", correct:false},
+      {text:"Prerenal azotemia from dehydration", correct:true},
+      {text:"Intrinsic renal failure unrelated to hydration status", correct:false},
+      {text:"Urinary tract obstruction", correct:false}
+    ],
+    explain:"A disproportionately high BUN:Cr ratio that improves with volume repletion is the classic pattern of prerenal azotemia — the kidneys themselves are fine, but reduced perfusion from dehydration was dragging both values up."
+  }
+];
+
+const FLUIDS = [
+  {name:"0.9% Normal Saline (NS)", cls:"isotonic"},
+  {name:"Lactated Ringer's (LR)", cls:"isotonic"},
+  {name:"D5W (5% Dextrose in Water)", cls:"isotonic"},
+  {name:"0.45% Normal Saline (½NS)", cls:"hypotonic"},
+  {name:"3% Normal Saline", cls:"hypertonic"},
+  {name:"D5½NS", cls:"hypertonic"},
+  {name:"D5NS", cls:"hypertonic"}
+];
+const BINS = [
+  {cls:"isotonic", label:"Isotonic"},
+  {cls:"hypotonic", label:"Hypotonic"},
+  {cls:"hypertonic", label:"Hypertonic"}
+];
+
+const R4_Q = {
+  prompt:"This patient received 3 L of 0.9% NS first, then D5W at 75 mL/hr. What's the reasoning behind that two-step plan?",
+  options:[
+    {text:"NS restores intravascular volume and blood pressure first; D5W then supplies free water to gradually correct the water deficit and hypernatremia", correct:true},
+    {text:"D5W is used first because it corrects sodium the fastest", correct:false},
+    {text:"Normal saline is contraindicated in hypernatremia", correct:false},
+    {text:"The switch was arbitrary and has no clinical basis", correct:false}
+  ],
+  explain:"Isotonic saline expands the intravascular space and treats the hypotension/shock physiology first without changing tonicity too fast. Once perfusion is stabilized, a hypotonic free-water source (D5W, since the dextrose is metabolized) gradually replaces the water deficit driving the hypernatremia."
+};
+
+const R5_CLUES = [
+  {clue:"Peaked T waves and muscle weakness in a patient with renal failure", answer:"Hyperkalemia"},
+  {clue:"Flattened T waves, U waves, and leg cramps in a patient on loop diuretics", answer:"Hypokalemia"},
+  {clue:"Absent deep tendon reflexes, hypotension, and respiratory depression from magnesium-containing antacids in renal failure", answer:"Hypermagnesemia"},
+  {clue:"Hyperactive reflexes, tremors, and torsades de pointes in a patient with alcohol use disorder", answer:"Hypomagnesemia"},
+  {clue:"Decreased reflexes, constipation, kidney stones, and confusion in a patient with hyperparathyroidism", answer:"Hypercalcemia"},
+  {clue:"Positive Chvostek's and Trousseau's signs with perioral tingling after thyroid surgery", answer:"Hypocalcemia"},
+  {clue:"Soft-tissue calcification with low calcium in a patient with chronic kidney disease", answer:"Hyperphosphatemia"},
+  {clue:"Muscle weakness and respiratory failure in a malnourished patient just started on tube feeding", answer:"Hypophosphatemia"}
+];
+const R5_TIME = 90;
+
+const LO_CROSSWALK = [
+  {round:"Round 1 · Compartment Check", los:"LO 1, 2, 6"},
+  {round:"Round 2 · Bedside Triage", los:"LO 3, 4, 7"},
+  {round:"Round 3 · Chart Review", los:"LO 3, 4, 8, 10"},
+  {round:"Round 4 · IV Fluid Pharmacy", los:"LO 5, 9"},
+  {round:"Round 5 · Lytes Beyond Sodium", los:"LO 8, 10"}
+];
+
+const DISCUSS_QUESTIONS = [
+  "The crackles in Round 2 were a distractor for fluid volume excess. What other assessment and lab findings help you tell an infectious cause of crackles apart from cardiogenic volume overload?",
+  "Age was a major risk factor here — reduced thirst, reduced renal concentrating ability, and dependence on staff for fluids. What nursing interventions at the nursing home might have prevented this admission?",
+  "If this patient's sodium had been low (hyponatremia) instead of high, how would your choice and rate of IV fluids change?",
+  "Which single electrolyte would you prioritize monitoring most closely during this patient's rehydration, and why?",
+  "The team followed guideline-based, gradual sodium correction and the patient still did not recover. What does that tell you about the limits of “doing everything right” in extreme electrolyte disturbances?"
+];
+
+const RANKS = [
+  {min:0.90, title:"Charge Nurse"},
+  {min:0.75, title:"RN, Ready for Rounds"},
+  {min:0.55, title:"New Grad — Solid Start"},
+  {min:0, title:"Chart This One for Review"}
+];
+
+/* ---------------------- State ---------------------- */
+
+let state = {
+  screen:"title",
+  groupName:"",
+  startedAt:null,
+  scores:{r1:0,r2:0,r3:0,r4:0,r5:0},
+  max:{r1:R1_PAIRS.length*10, r2:20 + R2_Q2.items.length*10 + 20 + R2_GCS_INTERPRET.items.length*10, r3:R3_QUESTIONS.length*25, r4:FLUIDS.length*10+30, r5:R5_CLUES.length*15+30},
+  r1:{pairs:{}, picked:null, submitted:false},
+  r2:{q1Answered:false, q2Submitted:false, q2Checked:{}, gcsAnswered:false, interpretSubmitted:false, interpretChecked:{}},
+  r3:{idx:0, answered:[false,false,false,false]},
+  r4:{placed:{}, submitted:false},
+  r5:{started:false, finished:false, timeLeft:R5_TIME, matched:{}, selClue:null, timerId:null, order:[]},
+  elapsedId:null
+};
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+/* ---------------------- Render helpers ---------------------- */
+
+const app = document.getElementById("app");
+
+function el(html){
+  const t = document.createElement("template");
+  t.innerHTML = html.trim();
+  return t.content.firstElementChild;
+}
+
+/* Small helpers so every round can support drag-and-drop on top of
+   click-to-select — touch devices and trackpads both just work. */
+function wireDraggable(node, payload){
+  node.draggable = true;
+  node.addEventListener("dragstart",(e)=>{
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", JSON.stringify(payload));
+    setTimeout(()=>node.classList.add("dragging"),0);
+  });
+  node.addEventListener("dragend",()=>node.classList.remove("dragging"));
+}
+function wireDropTarget(node, onDrop){
+  node.addEventListener("dragover",(e)=>{ e.preventDefault(); e.dataTransfer.dropEffect="move"; node.classList.add("dragover"); });
+  node.addEventListener("dragleave",()=>node.classList.remove("dragover"));
+  node.addEventListener("drop",(e)=>{
+    e.preventDefault();
+    node.classList.remove("dragover");
+    let payload = null;
+    try{ payload = JSON.parse(e.dataTransfer.getData("text/plain")); }catch(err){}
+    if(payload) onDrop(payload);
+  });
+}
+
+function fmtTime(sec){
+  const m = Math.floor(sec/60), s = sec%60;
+  return m+":"+String(s).padStart(2,"0");
+}
+
+function totalScore(){
+  return Object.values(state.scores).reduce((a,b)=>a+b,0);
+}
+function totalMax(){
+  return Object.values(state.max).reduce((a,b)=>a+b,0);
+}
+
+function roundNumber(){
+  const map = {title:0, r1:1, r2:2, r3:3, r4:4, r5:5, report:6};
+  return map[state.screen] ?? 0;
+}
+
+function monitorBar(){
+  if(state.screen==="title") return "";
+  const rn = roundNumber();
+  const elapsed = state.startedAt ? Math.floor((Date.now()-state.startedAt)/1000) : 0;
+  return `
+  <div class="monitor">
+    <div class="brand"><span class="pulse-dot"></span> Balance, STAT!</div>
+    <div class="sep"></div>
+    <div class="field"><span class="k">Team</span><span class="v">${state.groupName || "Unnamed"}</span></div>
+    <div class="sep"></div>
+    <div class="field"><span class="k">Round</span><span class="v">${rn>5? "Report" : rn+" of 5"}</span></div>
+    <div class="sep"></div>
+    <div class="field"><span class="k">Elapsed</span><span class="v mono" id="elapsedField">${fmtTime(elapsed)}</span></div>
+    <div class="sep"></div>
+    <div class="field"><span class="k">Score</span><span class="v mono">${totalScore()}</span></div>
+    <div class="grow"></div>
+    <button class="refbtn" id="openRef">Reference card</button>
+  </div>
+  <div class="progress-track"><div class="progress-fill" style="width:${Math.min(100,(rn/5)*100)}%"></div></div>
+  `;
+}
+
+function loGrid(){
+  return `<div class="lo-grid">${LOS.map((l,i)=>`<div class="lo-item"><span class="n">${i+1}</span><span>${l}</span></div>`).join("")}</div>`;
+}
+
+/* ---------------------- Screens ---------------------- */
+
+function renderTitle(){
+  app.innerHTML = `
+    <div class="hero">
+      <span class="eyebrow">A fluids &amp; electrolytes case game</span>
+      <h1>Balance, STAT!</h1>
+      <p class="tag">Admit the patient. Read the chart. Keep the balance.</p>
+    </div>
+    <div class="card stack">
+      <p class="lede">Your team is the admitting nurses for a 70-year-old nursing home resident with altered mental status. Across five short rounds you'll sort fluid compartments, triage the bedside exam, read a real basic metabolic panel, choose IV fluids, and race the clock on electrolyte imbalances. Play takes about 12&ndash;15 minutes.</p>
+      <div>
+        <span class="eyebrow">This session covers</span>
+        ${loGrid()}
+      </div>
+      <div>
+        <label class="field-label" for="teamInput">Team / group name</label>
+        <input type="text" id="teamInput" placeholder="e.g., Team Isotonic" maxlength="30">
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="startBtn">Begin Shift</button>
+        <button class="btn ghost" id="refBtnTitle">Open reference card</button>
+      </div>
+    </div>
+    <p class="footer-note">Based on Kamatam et al., <em>Extreme Hypernatremia due to Dehydration</em>, J Med Cases 2023;14(7):232&ndash;236 &middot; details adapted for classroom use.</p>
+  `;
+  document.getElementById("startBtn").onclick = ()=>{
+    const v = document.getElementById("teamInput").value.trim();
+    state.groupName = v || "Unnamed Team";
+    state.startedAt = Date.now();
+    startElapsedTimer();
+    goTo("r1");
+  };
+  document.getElementById("refBtnTitle").onclick = openRef;
+}
+
+function startElapsedTimer(){
+  if(state.elapsedId) clearInterval(state.elapsedId);
+  state.elapsedId = setInterval(()=>{
+    const f = document.getElementById("elapsedField");
+    if(f && state.startedAt){
+      f.textContent = fmtTime(Math.floor((Date.now()-state.startedAt)/1000));
+    }
+  },1000);
+}
+
+function renderR1(){
+  const pairs = state.r1.pairs;
+  const submitted = state.r1.submitted;
+  const answeredCount = Object.keys(pairs).length;
+  const allPlaced = answeredCount === R1_PAIRS.length;
+  const usedDefs = new Set(Object.values(pairs));
+
+  app.innerHTML = `
+    ${monitorBar()}
+    <div class="stack">
+      <div class="round-head">
+        <div>
+          <div class="round-kicker"><span class="pill">Round 1 of 5</span><span class="pill amber">Untimed</span></div>
+          <h2 class="round-title">Compartment Check</h2>
+        </div>
+      </div>
+      <p class="lede">Drag each definition onto the term it matches — or click one to pick it up, then click a row to place it. Rearrange as much as you like; nothing's scored until your team submits.</p>
+      <div class="card stack">
+        <div>
+          <span class="eyebrow">Definitions</span>
+          <div class="pool-tray" id="defTray"></div>
+        </div>
+        <div class="term-rows" id="termRows"></div>
+        <div class="btn-row">
+          <button class="btn" id="submitR1Btn" ${(allPlaced && !submitted)? "" : "disabled"}>${submitted? "Submitted" : "Submit answers"}</button>
+          <span class="lede" id="r1status">${answeredCount} of ${R1_PAIRS.length} placed${submitted? " · "+state.scores.r1+" pts" : ""}</span>
+        </div>
+      </div>
+      ${submitted ? `
+        <div class="card stack">
+          <span class="eyebrow">Answer key</span>
+          <div class="answer-key">
+            ${R1_PAIRS.map((p,i)=>{
+              const gotIt = pairs[i]===i;
+              return `<div class="ak-row ${gotIt?"ok":"miss"}">
+                <span class="mark">${gotIt?"✓":"✗"}</span>
+                <div class="ak-body">
+                  <strong>${p.term}</strong>
+                  ${p.def}
+                  ${gotIt? "" : `<div class="ak-your">Your team matched: “${R1_PAIRS[pairs[i]].def}”</div>`}
+                </div>
+              </div>`;
+            }).join("")}
+          </div>
+        </div>
+      ` : ""}
+      <div class="btn-row">
+        <button class="btn" id="nextBtn" ${submitted? "" : "disabled"}>Continue to Round 2 →</button>
+      </div>
+    </div>
+  `;
+
+  const defTray = document.getElementById("defTray");
+  R1_PAIRS.forEach((p,i)=>{
+    if(usedDefs.has(i)) return;
+    const selected = state.r1.picked===i;
+    const chip = el(`<div class="pool-chip ${selected?"selected":""}">${p.def}</div>`);
+    if(!submitted){
+      chip.onclick = ()=>{ state.r1.picked = (state.r1.picked===i)? null : i; renderR1(); };
+      wireDraggable(chip, {defIdx:i});
+    }
+    defTray.appendChild(chip);
+  });
+  if(!submitted){
+    wireDropTarget(defTray, (payload)=>{
+      if(payload && payload.fromTerm!=null) removeDef(payload.fromTerm);
+    });
+  }
+
+  const termRows = document.getElementById("termRows");
+  R1_PAIRS.forEach((p,i)=>{
+    const defIdx = pairs[i];
+    const filled = defIdx !== undefined;
+    const correct = filled && defIdx===i;
+    const zoneCls = filled ? "filled" : "";
+    const row = el(`<div class="term-row"><div class="term-label">${p.term}</div><div class="dropzone ${zoneCls}" data-term="${i}">${filled? "" : `<span class="placeholder">Drop a definition here</span>`}</div></div>`);
+    const zone = row.querySelector(".dropzone");
+    if(filled){
+      let chipCls = "";
+      if(submitted) chipCls = correct? "correct" : "incorrect";
+      else if(state.r1.picked===defIdx) chipCls = "selected";
+      const chip = el(`<div class="slot-chip ${chipCls}">${R1_PAIRS[defIdx].def}${submitted? "" : `<button class="remove" title="Remove">✕</button>`}</div>`);
+      if(!submitted){
+        chip.querySelector(".remove").onclick = (e)=>{ e.stopPropagation(); removeDef(i); };
+        chip.addEventListener("click",(e)=>{ e.stopPropagation(); pickUpFromSlot(i); });
+        wireDraggable(chip, {defIdx, fromTerm:i});
+      }
+      zone.appendChild(chip);
+    }
+    if(!submitted){
+      zone.addEventListener("click",()=>{ if(state.r1.picked!=null) placeDef(i, state.r1.picked); });
+      wireDropTarget(zone, (payload)=>{ if(payload && payload.defIdx!=null) placeDef(i, payload.defIdx); });
+    }
+    termRows.appendChild(row);
+  });
+
+  const submitBtn = document.getElementById("submitR1Btn");
+  if(submitBtn) submitBtn.onclick = ()=>{
+    if(!allPlaced || state.r1.submitted) return;
+    let correctCount = 0;
+    R1_PAIRS.forEach((p,i)=>{ if(state.r1.pairs[i]===i) correctCount++; });
+    state.scores.r1 = correctCount*10;
+    state.r1.submitted = true;
+    renderR1();
+  };
+  document.getElementById("nextBtn").onclick = ()=>goTo("r2");
+  wireRef();
+}
+
+function placeDef(termIdx, defIdx){
+  if(state.r1.submitted) return;
+  const pairs = state.r1.pairs;
+  Object.keys(pairs).forEach(k=>{ if(pairs[k]===defIdx) delete pairs[k]; });
+  pairs[termIdx] = defIdx;
+  state.r1.picked = null;
+  renderR1();
+}
+function removeDef(termIdx){
+  if(state.r1.submitted) return;
+  delete state.r1.pairs[termIdx];
+  renderR1();
+}
+function pickUpFromSlot(termIdx){
+  if(state.r1.submitted) return;
+  const defIdx = state.r1.pairs[termIdx];
+  if(defIdx===undefined) return;
+  delete state.r1.pairs[termIdx];
+  state.r1.picked = defIdx;
+  renderR1();
+}
+
+function renderR2(){
+  const {q1Answered} = state.r2;
+  app.innerHTML = `
+    ${monitorBar()}
+    <div class="stack">
+      <div class="round-head">
+        <div>
+          <div class="round-kicker"><span class="pill">Round 2 of 5</span><span class="pill amber">Untimed</span></div>
+          <h2 class="round-title">Bedside Triage</h2>
+        </div>
+      </div>
+      <div class="chart-note">
+        <h3>Initial presentation</h3>
+        ${CASE_INTRO.history.map(h=>`<p style="margin:0 0 6px;">${h}</p>`).join("")}
+        <div class="vitals-row">
+          ${CASE_INTRO.vitals.map(v=>`<div class="vital ${v.flag?"flag":""}"><div class="lab">${v.lab}</div><div class="num mono">${v.num}</div></div>`).join("")}
+        </div>
+        <p style="margin:10px 0 0;"><strong>Exam:</strong> ${CASE_INTRO.exam}</p>
+      </div>
+
+      <div class="chart-note">
+        <h3>Neurologic exam</h3>
+        <p style="margin:0;">${NEURO_EXAM}</p>
+      </div>
+
+      <div class="card stack" id="q1card">
+        <div>
+          <span class="eyebrow">Question 1</span>
+          <p style="margin:6px 0 0;font-weight:600;">${R2_Q1.prompt}</p>
+        </div>
+        <div class="choice-list" id="q1list"></div>
+        <div id="q1feedback"></div>
+      </div>
+
+      <div class="card stack" id="q2card" ${q1Answered?"":"style=\"opacity:.4;pointer-events:none;\""}>
+        <div>
+          <span class="eyebrow">Question 2 &middot; select all that apply</span>
+          <p style="margin:6px 0 0;font-weight:600;">${R2_Q2.prompt}</p>
+        </div>
+        <div class="choice-list" id="q2list"></div>
+        <div class="btn-row">
+          <button class="btn" id="q2submit" ${state.r2.q2Submitted?"disabled":""}>${state.r2.q2Submitted? "Submitted" : "Check answers"}</button>
+        </div>
+        <div id="q2feedback"></div>
+      </div>
+
+      <div class="card stack" id="gcsCard" ${state.r2.q2Submitted?"":"style=\"opacity:.4;pointer-events:none;\""}>
+        <div>
+          <span class="eyebrow">Question 3</span>
+          <p style="margin:6px 0 0;font-weight:600;">${R2_GCS_CALC.prompt}</p>
+        </div>
+        <div class="choice-list" id="gcsList"></div>
+        <div id="gcsFeedback"></div>
+      </div>
+
+      <div class="card stack" id="interpretCard" ${state.r2.gcsAnswered?"":"style=\"opacity:.4;pointer-events:none;\""}>
+        <div>
+          <span class="eyebrow">Question 4</span>
+          <p style="margin:6px 0 0;font-weight:600;">${R2_GCS_INTERPRET.prompt}</p>
+        </div>
+        <div class="choice-list" id="interpretList"></div>
+        <div class="btn-row">
+          <button class="btn" id="interpretSubmit" ${state.r2.interpretSubmitted?"disabled":""}>${state.r2.interpretSubmitted? "Submitted" : "Check answers"}</button>
+        </div>
+        <div id="interpretFeedback"></div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" id="nextBtn" ${state.r2.interpretSubmitted? "" : "disabled"}>Continue to Round 3 →</button>
+        <span class="lede">${state.scores.r2} of ${state.max.r2} pts</span>
+      </div>
+    </div>
+  `;
+  const q1list = document.getElementById("q1list");
+  R2_Q1.options.forEach((o,i)=>{
+    const c = el(`<label class="choice ${q1Answered?"locked":""}"><input type="radio" name="q1" ${q1Answered?"disabled":""}><span>${o.text}</span></label>`);
+    if(q1Answered && o.correct) c.classList.add("correct");
+    c.onclick = (e)=>{
+      if(state.r2.q1Answered) return;
+      state.r2.q1Answered = true;
+      state.scores.r2 += o.correct ? 20 : 0;
+      document.getElementById("q1feedback").innerHTML = `<div class="feedback ${o.correct?"good":"bad"}"><strong>${o.correct? "Correct" : "Not quite"}</strong>${R2_Q1.explain}</div>`;
+      renderR2();
+    };
+    q1list.appendChild(c);
+  });
+
+  const q2list = document.getElementById("q2list");
+  R2_Q2.items.forEach((it,i)=>{
+    const checked = state.r2.q2Checked[i] || false;
+    const c = el(`<label class="choice ${state.r2.q2Submitted?"locked":""}"><input type="checkbox" ${checked?"checked":""} ${state.r2.q2Submitted?"disabled":""}><span>${it.text}</span></label>`);
+    if(state.r2.q2Submitted){
+      const userChecked = !!state.r2.q2Checked[i];
+      const isRight = userChecked === it.correct;
+      c.classList.add(isRight? "correct":"incorrect");
+    }
+    c.querySelector("input").onchange = (e)=>{
+      state.r2.q2Checked[i] = e.target.checked;
+    };
+    q2list.appendChild(c);
+  });
+  document.getElementById("q2submit").onclick = ()=>{
+    if(state.r2.q2Submitted) return;
+    state.r2.q2Submitted = true;
+    let pts = 0;
+    const notes = [];
+    R2_Q2.items.forEach((it,i)=>{
+      const userChecked = !!state.r2.q2Checked[i];
+      if(userChecked === it.correct) pts += 10;
+      notes.push(`<li style="margin-bottom:4px;"><strong>${it.text}:</strong> ${it.note}</li>`);
+    });
+    state.scores.r2 += pts;
+    document.getElementById("q2feedback").innerHTML = `<div class="feedback good"><strong>${pts} of ${R2_Q2.items.length*10} pts</strong><ul style="margin:6px 0 0;padding-left:18px;">${notes.join("")}</ul></div>`;
+    renderR2();
+  };
+
+  const gcsAnswered = state.r2.gcsAnswered;
+  const gcsList = document.getElementById("gcsList");
+  R2_GCS_CALC.options.forEach((o)=>{
+    const c = el(`<label class="choice ${gcsAnswered?"locked":""}"><input type="radio" name="gcs" ${gcsAnswered?"disabled":""}><span>${o.text}</span></label>`);
+    if(gcsAnswered && o.correct) c.classList.add("correct");
+    c.onclick = ()=>{
+      if(state.r2.gcsAnswered) return;
+      state.r2.gcsAnswered = true;
+      state.scores.r2 += o.correct ? 20 : 0;
+      document.getElementById("gcsFeedback").innerHTML = `<div class="feedback ${o.correct?"good":"bad"}"><strong>${o.correct? "Correct" : "Not quite"}</strong>${R2_GCS_CALC.explain}</div>`;
+      renderR2();
+    };
+    gcsList.appendChild(c);
+  });
+
+  const interpretList = document.getElementById("interpretList");
+  R2_GCS_INTERPRET.items.forEach((it,i)=>{
+    const checked = state.r2.interpretChecked[i] || false;
+    const c = el(`<label class="choice ${state.r2.interpretSubmitted?"locked":""}"><input type="checkbox" ${checked?"checked":""} ${state.r2.interpretSubmitted?"disabled":""}><span>${it.text}</span></label>`);
+    if(state.r2.interpretSubmitted){
+      const userChecked = !!state.r2.interpretChecked[i];
+      const isRight = userChecked === it.correct;
+      c.classList.add(isRight? "correct":"incorrect");
+    }
+    c.querySelector("input").onchange = (e)=>{
+      state.r2.interpretChecked[i] = e.target.checked;
+    };
+    interpretList.appendChild(c);
+  });
+  const interpretSubmitBtn = document.getElementById("interpretSubmit");
+  if(interpretSubmitBtn) interpretSubmitBtn.onclick = ()=>{
+    if(state.r2.interpretSubmitted) return;
+    state.r2.interpretSubmitted = true;
+    let pts = 0;
+    const notes = [];
+    R2_GCS_INTERPRET.items.forEach((it,i)=>{
+      const userChecked = !!state.r2.interpretChecked[i];
+      if(userChecked === it.correct) pts += 10;
+      notes.push(`<li style="margin-bottom:4px;"><strong>${it.text}:</strong> ${it.note}</li>`);
+    });
+    state.scores.r2 += pts;
+    document.getElementById("interpretFeedback").innerHTML = `<div class="feedback good"><strong>${pts} of ${R2_GCS_INTERPRET.items.length*10} pts</strong><ul style="margin:6px 0 0;padding-left:18px;">${notes.join("")}</ul></div>`;
+    renderR2();
+  };
+
+  document.getElementById("nextBtn").onclick = ()=>goTo("r3");
+  wireRef();
+}
+
+function renderLabsTable(){
+  return `
+  <div class="tbl-wrap">
+    <table class="labs">
+      <thead><tr><th>Lab</th>${LABS.columns.map(c=>`<th>${c}</th>`).join("")}</tr></thead>
+      <tbody>
+        ${LABS.rows.map(r=>`<tr><td>${r.label}<br><span class="mono" style="font-size:.7rem;color:var(--ink-soft);">ref ${r.range}</span></td>${r.values.map((v,i)=>`<td class="${r.flagIdx.includes(i)?"flag":""}">${v}</td>`).join("")}</tr>`).join("")}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+function renderR3(){
+  const q = R3_QUESTIONS[state.r3.idx];
+  const answered = state.r3.answered[state.r3.idx];
+  const isLast = state.r3.idx === R3_QUESTIONS.length-1;
+  const allAnswered = state.r3.answered.every(Boolean);
+  app.innerHTML = `
+    ${monitorBar()}
+    <div class="stack">
+      <div class="round-head">
+        <div>
+          <div class="round-kicker"><span class="pill">Round 3 of 5</span><span class="pill amber">Untimed</span></div>
+          <h2 class="round-title">Chart Review</h2>
+        </div>
+        <span class="lede">Question ${state.r3.idx+1} of ${R3_QUESTIONS.length}</span>
+      </div>
+      <p class="lede">Basic metabolic profile at admission and every 24 hours after.</p>
+      ${renderLabsTable()}
+      <div class="card stack">
+        <p style="margin:0;font-weight:600;">${q.prompt}</p>
+        <div class="choice-list" id="qlist"></div>
+        <div id="qfeedback"></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn ghost" id="prevBtn" ${state.r3.idx===0?"disabled":""}>← Back</button>
+        ${isLast
+          ? `<button class="btn" id="nextRoundBtn" ${allAnswered?"":"disabled"}>Continue to Round 4 →</button>`
+          : `<button class="btn" id="nextQBtn" ${answered?"":"disabled"}>Next question →</button>`
+        }
+        <span class="lede">${state.scores.r3} of ${state.max.r3} pts</span>
+      </div>
+    </div>
+  `;
+  const qlist = document.getElementById("qlist");
+  q.options.forEach((o)=>{
+    const c = el(`<label class="choice ${answered?"locked":""}"><input type="radio" name="q3" ${answered?"disabled":""}><span>${o.text}</span></label>`);
+    if(answered && o.correct) c.classList.add("correct");
+    c.onclick = ()=>{
+      if(state.r3.answered[state.r3.idx]) return;
+      state.r3.answered[state.r3.idx] = true;
+      if(o.correct) state.scores.r3 += 25;
+      document.getElementById("qfeedback").innerHTML = `<div class="feedback ${o.correct?"good":"bad"}"><strong>${o.correct?"Correct":"Not quite"}</strong>${q.explain}</div>`;
+      renderR3();
+    };
+    qlist.appendChild(c);
+  });
+  const prevBtn = document.getElementById("prevBtn");
+  if(prevBtn) prevBtn.onclick = ()=>{ state.r3.idx--; renderR3(); };
+  const nextQBtn = document.getElementById("nextQBtn");
+  if(nextQBtn) nextQBtn.onclick = ()=>{ state.r3.idx++; renderR3(); };
+  const nextRoundBtn = document.getElementById("nextRoundBtn");
+  if(nextRoundBtn) nextRoundBtn.onclick = ()=>goTo("r4");
+  wireRef();
+}
+
+function renderR4(){
+  const placedNames = Object.keys(state.r4.placed);
+  app.innerHTML = `
+    ${monitorBar()}
+    <div class="stack">
+      <div class="round-head">
+        <div>
+          <div class="round-kicker"><span class="pill">Round 4 of 5</span><span class="pill amber">Untimed</span></div>
+          <h2 class="round-title">IV Fluid Pharmacy</h2>
+        </div>
+      </div>
+      <p class="lede">Drag each fluid into the bin where it belongs — or click a fluid, then click a bin. Move anything between bins any time before you score the round.</p>
+      <div class="card stack">
+        <div class="fluid-tray" id="tray"></div>
+        <div class="bin-board" id="binBoard"></div>
+        <div class="lede" id="binStatus">${placedNames.length} of ${FLUIDS.length} sorted</div>
+      </div>
+
+      <div class="card stack" id="q4card" ${placedNames.length===FLUIDS.length? "" : "style=\"opacity:.4;pointer-events:none;\""}>
+        <div>
+          <span class="eyebrow">Case tie-in</span>
+          <p style="margin:6px 0 0;font-weight:600;">${R4_Q.prompt}</p>
+        </div>
+        <div class="choice-list" id="q4list"></div>
+        <div id="q4feedback"></div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" id="nextBtn" ${state.r4.submitted? "" : "disabled"}>Continue to Round 5 →</button>
+        <span class="lede">${state.scores.r4} of ${state.max.r4} pts</span>
+      </div>
+    </div>
+  `;
+  const tray = document.getElementById("tray");
+  let selectedFluid = null;
+  FLUIDS.forEach((f)=>{
+    if(state.r4.placed[f.name]) return;
+    const c = el(`<button class="fluid-chip" data-name="${f.name}"><span class="drop"></span>${f.name}</button>`);
+    c.onclick = ()=>{
+      tray.querySelectorAll(".fluid-chip").forEach(x=>x.classList.remove("selected"));
+      selectedFluid = f;
+      c.classList.add("selected");
+    };
+    if(!state.r4.submitted) wireDraggable(c, {name:f.name});
+    tray.appendChild(c);
+  });
+  if(!state.r4.submitted){
+    wireDropTarget(tray, (payload)=>{ if(payload && payload.name) unplaceFluid(payload.name); });
+  }
+  const binBoard = document.getElementById("binBoard");
+  BINS.forEach(b=>{
+    const binEl = el(`<div class="bin" data-cls="${b.cls}"><h4>${b.label}</h4><div class="items"></div></div>`);
+    const itemsEl = binEl.querySelector(".items");
+    Object.entries(state.r4.placed).forEach(([name,cls])=>{
+      if(cls!==b.cls) return;
+      const fluid = FLUIDS.find(f=>f.name===name);
+      const correct = fluid.cls === b.cls;
+      const row = el(`<div class="bin-item ${state.r4.submitted ? (correct?"correct":"incorrect") : ""}"><span>${name}</span>${state.r4.submitted?"":'<button title="remove">✕</button>'}</div>`);
+      if(!state.r4.submitted){
+        row.querySelector("button").onclick = (e)=>{ e.stopPropagation(); unplaceFluid(name); };
+        wireDraggable(row, {name});
+      }
+      itemsEl.appendChild(row);
+    });
+    binEl.onclick = ()=>{
+      if(!selectedFluid || state.r4.placed[selectedFluid.name]) return;
+      placeFluid(selectedFluid.name, b.cls);
+    };
+    if(!state.r4.submitted){
+      wireDropTarget(binEl, (payload)=>{ if(payload && payload.name) placeFluid(payload.name, b.cls); });
+    }
+    binBoard.appendChild(binEl);
+  });
+
+  if(placedNames.length===FLUIDS.length && !state.r4.submitted){
+    document.getElementById("binStatus").innerHTML = `All sorted — <button class="btn" style="padding:6px 14px;font-size:.82rem;" id="scoreBinsBtn">Score this round</button>`;
+    document.getElementById("scoreBinsBtn").onclick = ()=>{
+      let pts = 0;
+      FLUIDS.forEach(f=>{ if(state.r4.placed[f.name]===f.cls) pts += 10; });
+      state.scores.r4 += pts;
+      state.r4.submitted = true;
+      renderR4();
+    };
+  }
+
+  const q4list = document.getElementById("q4list");
+  R4_Q.options.forEach(o=>{
+    const answered = state.r4.q4Answered;
+    const c = el(`<label class="choice ${answered?"locked":""}"><input type="radio" name="q4" ${answered?"disabled":""}><span>${o.text}</span></label>`);
+    if(answered && o.correct) c.classList.add("correct");
+    c.onclick = ()=>{
+      if(state.r4.q4Answered) return;
+      state.r4.q4Answered = true;
+      if(o.correct) state.scores.r4 += 30;
+      document.getElementById("q4feedback").innerHTML = `<div class="feedback ${o.correct?"good":"bad"}"><strong>${o.correct?"Correct":"Not quite"}</strong>${R4_Q.explain}</div>`;
+      renderR4();
+    };
+    q4list.appendChild(c);
+  });
+
+  document.getElementById("nextBtn").onclick = ()=>goTo("r5");
+  wireRef();
+}
+
+function placeFluid(name, cls){
+  if(state.r4.submitted) return;
+  state.r4.placed[name] = cls;
+  renderR4();
+}
+function unplaceFluid(name){
+  if(state.r4.submitted) return;
+  delete state.r4.placed[name];
+  renderR4();
+}
+
+function renderR5Intro(){
+  app.innerHTML = `
+    ${monitorBar()}
+    <div class="stack">
+      <div class="round-head">
+        <div>
+          <div class="round-kicker"><span class="pill">Round 5 of 5</span><span class="pill amber">Speed round · ${R5_TIME}s</span></div>
+          <h2 class="round-title">Lytes Beyond Sodium</h2>
+        </div>
+      </div>
+      <div class="card stack">
+        <p class="lede">This case was all sodium — but the unit sees every electrolyte. Drag (or click) each clue onto the imbalance it describes before the clock runs out. Ready as a team?</p>
+        <div class="btn-row"><button class="btn" id="startSpeed">Start the clock</button></div>
+      </div>
+    </div>
+  `;
+  document.getElementById("startSpeed").onclick = ()=>{
+    state.r5.started = true;
+    state.r5.order = shuffle(R5_CLUES.map((_,i)=>i));
+    state.r5.answerOrder = shuffle(R5_CLUES.map(c=>c.answer));
+    runSpeedTimer();
+    renderR5();
+  };
+  wireRef();
+}
+
+function runSpeedTimer(){
+  if(state.r5.timerId) clearInterval(state.r5.timerId);
+  state.r5.timeLeft = R5_TIME;
+  state.r5.timerId = setInterval(()=>{
+    state.r5.timeLeft--;
+    const t = document.getElementById("speedTimer");
+    if(t) t.textContent = fmtTime(state.r5.timeLeft);
+    const allDone = Object.keys(state.r5.matched).length === R5_CLUES.length;
+    if(state.r5.timeLeft<=0 || allDone){
+      clearInterval(state.r5.timerId);
+      finishSpeedRound();
+    }
+  },1000);
+}
+
+function finishSpeedRound(){
+  if(state.r5.finished) return;
+  state.r5.finished = true;
+  const matchedCount = Object.keys(state.r5.matched).length;
+  let bonus = 0;
+  if(matchedCount === R5_CLUES.length){
+    if(state.r5.timeLeft >= 45) bonus = 30;
+    else if(state.r5.timeLeft >= 20) bonus = 15;
+  }
+  state.r5.bonus = bonus;
+  state.scores.r5 += bonus;
+  renderR5();
+}
+
+function renderR5(){
+  if(!state.r5.started){ renderR5Intro(); return; }
+  const matchedCount = Object.keys(state.r5.matched).length;
+  app.innerHTML = `
+    ${monitorBar()}
+    <div class="stack">
+      <div class="round-head">
+        <div>
+          <div class="round-kicker"><span class="pill">Round 5 of 5</span><span class="pill amber">Speed round</span></div>
+          <h2 class="round-title">Lytes Beyond Sodium</h2>
+        </div>
+      </div>
+      <div class="speed-bar">
+        <span>⏱</span>
+        <span class="timer mono" id="speedTimer">${fmtTime(state.r5.timeLeft)}</span>
+        <span class="lede">${matchedCount} of ${R5_CLUES.length} matched · ${state.scores.r5} pts</span>
+      </div>
+      <div class="lyte-grid">
+        <div class="chip-col" id="clueCol"></div>
+        <div class="chip-col" id="ansCol"></div>
+      </div>
+      ${state.r5.finished ? `
+        <div class="feedback good">
+          <strong>Round complete — ${matchedCount} of ${R5_CLUES.length} matched${state.r5.bonus? ", +"+state.r5.bonus+" speed bonus":""}</strong>
+          Review any misses in the reference card before your team debriefs.
+        </div>
+        <div class="btn-row"><button class="btn" id="nextBtn">See your team's report →</button></div>
+      ` : ""}
+    </div>
+  `;
+  const clueCol = document.getElementById("clueCol");
+  const ansCol = document.getElementById("ansCol");
+  state.r5.order.forEach(i=>{
+    const item = R5_CLUES[i];
+    const matched = state.r5.matched[i]!==undefined;
+    const c = el(`<button class="chip ${matched?"matched":""}" ${matched||state.r5.finished?"disabled":""} data-i="${i}">${item.clue}</button>`);
+    c.onclick = ()=>{
+      if(state.r5.finished) return;
+      document.querySelectorAll("#clueCol .chip").forEach(x=>x.classList.remove("selected"));
+      c.classList.add("selected");
+      state.r5.selClue = i;
+    };
+    if(!matched && !state.r5.finished){
+      wireDraggable(c, {clueIdx:i});
+      wireDropTarget(c, (payload)=>{ if(payload && payload.ans!=null) attemptMatch(i, payload.ans, c); });
+    }
+    clueCol.appendChild(c);
+  });
+  (state.r5.answerOrder||[]).forEach(ans=>{
+    const alreadyUsed = Object.values(state.r5.matched).includes(ans);
+    if(alreadyUsed) return;
+    const c = el(`<button class="chip" ${state.r5.finished?"disabled":""}>${ans}</button>`);
+    c.onclick = ()=>{
+      if(state.r5.finished || state.r5.selClue==null) return;
+      attemptMatch(state.r5.selClue, ans, c);
+    };
+    if(!state.r5.finished){
+      wireDraggable(c, {ans});
+      wireDropTarget(c, (payload)=>{ if(payload && payload.clueIdx!=null) attemptMatch(payload.clueIdx, ans, c); });
+    }
+    ansCol.appendChild(c);
+  });
+  const nextBtn = document.getElementById("nextBtn");
+  if(nextBtn) nextBtn.onclick = ()=>goTo("report");
+  wireRef();
+}
+
+function attemptMatch(clueIdx, ans, node){
+  if(state.r5.finished || clueIdx==null) return;
+  const correctAns = R5_CLUES[clueIdx].answer;
+  if(ans===correctAns){
+    state.r5.matched[clueIdx] = ans;
+    state.scores.r5 += 15;
+    state.r5.selClue = null;
+    renderR5();
+    if(Object.keys(state.r5.matched).length===R5_CLUES.length){
+      clearInterval(state.r5.timerId);
+      finishSpeedRound();
+    }
+  } else if(node){
+    node.classList.add("wrong");
+    setTimeout(()=>node.classList.remove("wrong"),320);
+  }
+}
+
+function renderReport(){
+  if(state.elapsedId) clearInterval(state.elapsedId);
+  const pct = totalMax() ? totalScore()/totalMax() : 0;
+  const rank = RANKS.find(r=>pct>=r.min).title;
+  const rows = [
+    {label:"Round 1 · Compartment Check", score:state.scores.r1, max:state.max.r1},
+    {label:"Round 2 · Bedside Triage", score:state.scores.r2, max:state.max.r2},
+    {label:"Round 3 · Chart Review", score:state.scores.r3, max:state.max.r3},
+    {label:"Round 4 · IV Fluid Pharmacy", score:state.scores.r4, max:state.max.r4},
+    {label:"Round 5 · Lytes Beyond Sodium", score:state.scores.r5, max:state.max.r5}
+  ];
+  app.innerHTML = `
+    <div class="stack">
+      <div class="hero">
+        <span class="eyebrow">Shift report</span>
+        <h1 style="font-size:2rem;">${state.groupName}</h1>
+      </div>
+
+      <div class="score-banner">
+        <div>
+          <div class="eyebrow">Total score</div>
+          <div class="score-num">${totalScore()} <span style="font-size:1rem;color:var(--ink-soft);font-weight:500;">/ ${totalMax()}</span></div>
+        </div>
+        <div class="rank-badge">${rank}</div>
+      </div>
+
+      <div class="card stack">
+        <span class="eyebrow">Round breakdown</span>
+        <div class="breakdown">
+          ${rows.map(r=>`<div class="brow"><span>${r.label}</span><span class="bar-track"><span class="bar-fill" style="width:${r.max? Math.round(r.score/r.max*100):0}%"></span></span><span class="mono">${r.score}/${r.max}</span></div>`).join("")}
+        </div>
+      </div>
+
+      <div class="epilogue">
+        <h3>What happened to this patient</h3>
+        <p>His sodium was gradually corrected over 6&ndash;7 days down to 144 mEq/L, right on target. Despite that, he had minimal neurological recovery, developed ventilator-associated pneumonia, and could not be weaned off the ventilator. His family chose comfort-focused care, and he passed away on hospital day 11.</p>
+        <p style="margin-bottom:0;"><strong>Learning point:</strong> extreme hypernatremia carries a high risk of mortality and morbidity even with guideline-based, appropriately slow correction. Early recognition — and preventing severe dehydration in dependent, elderly patients in the first place — is what actually changes outcomes.</p>
+      </div>
+
+      <div class="card stack">
+        <span class="eyebrow">Learning objectives covered</span>
+        <table class="cross-tbl">
+          <thead><tr><th>Round</th><th>Objectives</th></tr></thead>
+          <tbody>${LO_CROSSWALK.map(x=>`<tr><td>${x.round}</td><td>${x.los}</td></tr>`).join("")}</tbody>
+        </table>
+      </div>
+
+      <div class="card stack">
+        <span class="eyebrow">For the class discussion</span>
+        <ol class="discuss-list">${DISCUSS_QUESTIONS.map(q=>`<li>${q}</li>`).join("")}</ol>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" id="restartBtn">Play again</button>
+        <button class="btn ghost" id="refBtnReport">Open reference card</button>
+      </div>
+    </div>
+  `;
+  document.getElementById("restartBtn").onclick = resetGame;
+  document.getElementById("refBtnReport").onclick = openRef;
+  if(pct>=0.9 && window.confetti){
+    confetti({particleCount:120, spread:75, origin:{y:0.3}, colors:["#0e7c86","#c97a2e","#2f8f5b"]});
+  }
+}
+
+function resetGame(){
+  state = {
+    screen:"title",
+    groupName:"",
+    startedAt:null,
+    scores:{r1:0,r2:0,r3:0,r4:0,r5:0},
+    max:state.max,
+    r1:{pairs:{}, picked:null, submitted:false},
+    r2:{q1Answered:false, q2Submitted:false, q2Checked:{}, gcsAnswered:false, interpretSubmitted:false, interpretChecked:{}},
+    r3:{idx:0, answered:[false,false,false,false]},
+    r4:{placed:{}, submitted:false},
+    r5:{started:false, finished:false, timeLeft:R5_TIME, matched:{}, selClue:null, timerId:null, order:[]},
+    elapsedId:null
+  };
+  goTo("title");
+}
+
+/* ---------------------- Router ---------------------- */
+
+const RENDERERS = { title:renderTitle, r1:renderR1, r2:renderR2, r3:renderR3, r4:renderR4, r5:renderR5, report:renderReport };
+
+function goTo(screen){
+  state.screen = screen;
+  window.scrollTo({top:0, behavior:"smooth"});
+  RENDERERS[screen]();
+}
+
+function openRef(){ document.getElementById("refOverlay").hidden = false; }
+function closeRef(){ document.getElementById("refOverlay").hidden = true; }
+function wireRef(){
+  const btn = document.getElementById("openRef");
+  if(btn) btn.onclick = openRef;
+}
+document.getElementById("refClose").onclick = closeRef;
+document.getElementById("refOverlay").addEventListener("click",(e)=>{
+  if(e.target.id==="refOverlay") closeRef();
+});
+
+/* ---------------------- Boot (with hot-reload support) ---------------------- */
+
+function start(initial){
+  if(initial && initial.state){
+    state = initial.state;
+    if(state.startedAt) startElapsedTimer();
+  }
+  goTo(state.screen);
+}
+
+if(window.claude && window.claude.hot){
+  window.claude.hot.snapshot(()=>({state}));
+  window.claude.hot.ready ? window.claude.hot.ready(()=>start(window.claude.hot.data)) : start(window.claude.hot.data);
+} else {
+  start();
+}
+
+})();
+</script>
+</body>
+</html>
